@@ -23,16 +23,18 @@ import (
 	"net/url"
 	"time"
 
+	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 	"github.com/golang/protobuf/proto"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	gtransport "google.golang.org/api/transport/grpc"
-	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 )
+
+var newNotificationChannelClientHook clientHook
 
 // NotificationChannelCallOptions contains the retry settings for each method of NotificationChannelClient.
 type NotificationChannelCallOptions struct {
@@ -150,7 +152,7 @@ func defaultNotificationChannelCallOptions() *NotificationChannelCallOptions {
 	}
 }
 
-// NotificationChannelClient is a client for interacting with Stackdriver Monitoring API.
+// NotificationChannelClient is a client for interacting with Cloud Monitoring API.
 //
 // Methods, except Close, may be called concurrently. However, fields must not be modified concurrently with method calls.
 type NotificationChannelClient struct {
@@ -172,7 +174,17 @@ type NotificationChannelClient struct {
 // The Notification Channel API provides access to configuration that
 // controls how messages related to incidents are sent.
 func NewNotificationChannelClient(ctx context.Context, opts ...option.ClientOption) (*NotificationChannelClient, error) {
-	connPool, err := gtransport.DialPool(ctx, append(defaultNotificationChannelClientOptions(), opts...)...)
+	clientOpts := defaultNotificationChannelClientOptions()
+
+	if newNotificationChannelClientHook != nil {
+		hookOpts, err := newNotificationChannelClientHook(ctx, clientHookParams{})
+		if err != nil {
+			return nil, err
+		}
+		clientOpts = append(clientOpts, hookOpts...)
+	}
+
+	connPool, err := gtransport.DialPool(ctx, append(clientOpts, opts...)...)
 	if err != nil {
 		return nil, err
 	}

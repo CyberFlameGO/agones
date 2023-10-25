@@ -52,9 +52,6 @@ func mergeTargetFile(targets []*wrapper, mergeFileName string) *wrapper {
 			for k, v := range f.swagger.Definitions {
 				mergedTarget.swagger.Definitions[k] = v
 			}
-			for k, v := range f.swagger.StreamDefinitions {
-				mergedTarget.swagger.StreamDefinitions[k] = v
-			}
 			for k, v := range f.swagger.Paths {
 				mergedTarget.swagger.Paths[k] = v
 			}
@@ -65,10 +62,6 @@ func mergeTargetFile(targets []*wrapper, mergeFileName string) *wrapper {
 		}
 	}
 	return mergedTarget
-}
-
-func fieldName(k string) string {
-	return strings.ReplaceAll(strings.Title(k), "-", "_")
 }
 
 // Q: What's up with the alias types here?
@@ -175,7 +168,7 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*plugin.CodeGenerato
 		for _, f := range targets {
 			if mergedTarget == nil {
 				mergedTarget = f
-			} else {
+			} else if mergedTarget != f {
 				mergedTarget.Enums = append(mergedTarget.Enums, f.Enums...)
 				mergedTarget.Messages = append(mergedTarget.Messages, f.Messages...)
 				mergedTarget.Services = append(mergedTarget.Services, f.Services...)
